@@ -7,8 +7,8 @@ on:
     branches: [ node-profile ]
   pull_request:
     branches: [ node-profile ]
-    
-// Create jobs to create your image which you can deploy on AWS, I am running my Node12 application on ubuntu OS. 
+
+// Create jobs to create your image which you can deploy on AWS, I am running my Node12 application on ubuntu OS.
 jobs:
   build:
     runs-on: ubuntu-latest
