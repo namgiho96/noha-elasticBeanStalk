@@ -44,8 +44,8 @@ jobs:
       with:
         aws_access_key: ${{secrets.AWS_ACCESS_REACT_KEY_ID}}
         aws_secret_key: ${{secrets.AWS_SECRET_ACCESS_REACT_KEY}}
-        application_name: "elasticBeanStalk-test-express"
-        environment_name: "gitrepo-test"
+        application_name: "noha-Test"
+        environment_name: "NohaTest-env"
         region: "ap-northeast-2"
         version_label: "elasticBeanStalk-${{ steps.format-time.outputs.replaced }}"
         deployment_package: deploy.zip
