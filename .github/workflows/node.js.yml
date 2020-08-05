@@ -1,29 +1,67 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+// 프로젝트 이름을 지정하십시오
+name: BeansTalk Test
 
-name: Node.js CI
-
+// Configure what events and branches you want to trigger your pipeline on, in this case I want it to be trgiggered when I push the code in react-profile branch
+//파이프 라인을 트리거 할 이벤트 및 브랜치를 구성하십시오.이 경우 반응 프로파일 브랜치에서 코드를 푸시 할 때 트러 거되고 싶습니다.
 on:
   push:
-    branches: [ master ]
+    branches: [ node-profile ]
   pull_request:
-    branches: [ master ]
+    branches: [ node-profile ]
+    
+// Create jobs to create your image which you can deploy on AWS, I am running my Node12 application on ubuntu OS. 
+// AWS에 배포 할 수있는 이미지를 생성하는 작업을 생성하십시오. 우분투 OS에서 Node10 애플리케이션을 실행하고 있습니다.
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x]
+        node-version: [10.x]
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+// In this step I am renaming my static main.js file by removing the auto-added hash from its name 
+// 이 단계에서는 이름에서 자동 추가 해시를 제거하여 정적 main.js 파일의 이름을 바꿉니다.
+    - name: rename main js
+      run: mv build/static/js/main.*.*.js build/static/js/main.js
+      
+// Creating my deployment package and compressing it into a zip file   
+// 배포 패키지 만들기 및 zip 파일로 압축
+    - name: Generate deployment package
+      run: zip -r deploy.zip * -x "**node_modules**"
+
+    - name: Get timestamp
+      uses: gerred/actions/current-time@master
+      id: current-time
+
+    - name: Run string replace
+      uses: frabert/replace-string-action@master
+      id: format-time
+      with:
+        pattern: '[:\.]+'
+        string: "${{ steps.current-time.outputs.time }}"
+        replace-with: '-'
+        flags: 'g'
+
+// Now, its time to deploy our package to Beanstalk that we've configured earlier, to deploy our app we need Secret keys that we can get from the AWS user, every user has separate keys on AWS. 
+// 제 이전에 구성한 Beanstalk에 패키지를 배포 할 시간입니다. 앱을 배포하려면 AWS 사용자로부터 얻을 수있는 비밀 키가 필요합니다. 모든 사용자는 AWS에서 별도의 키를 가지고 있습니다.
+    - name: Beanstalk Deploy for app
+      uses: einaregilsson/beanstalk-deploy@v10
+      with:
+        aws_access_key: ${{secrets.AWS_ACCESS_REACT_KEY_ID}}
+        aws_secret_key: ${{secrets.AWS_SECRET_ACCESS_REACT_KEY}}
+        application_name: "elasticBeanStalk-test-express"
+        environment_name: "gitrepo-test"
+        region: "ap-northeast-2"
+        version_label: "elasticBeanStalk-${{ steps.format-time.outputs.replaced }}"
+        deployment_package: deploy.zip
+
+    - name: Deployed!
+      run: echo App deployed to ELB
