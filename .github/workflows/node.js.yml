@@ -3,9 +3,9 @@ name: Node Js ElasticBeansTalk
 
 on:
   push:
-    branches: [ master ]
+    branches: [ noha ]
   pull_request:
-    branches: [ master ]
+    branches: [ noha ]
     
 
 jobs:
